@@ -55,11 +55,12 @@ function getFormatter(columnType) {
     }
 }
 
-
 (function () {
     // Get a reference to the VS Code webview api.
     // We use this API to post messages back to our extension.
     const vscode = acquireVsCodeApi();
+
+    let autoQuery = true;
 
     let textAreaElement = undefined;
     let loadingIconElement = undefined;
@@ -81,6 +82,8 @@ function getFormatter(columnType) {
     window.addEventListener('message', event => {
         const message = event.data; // The json data that the extension sent
         switch (message.type) {
+            case 'config':
+                autoQuery = message.autoQuery;
             case 'query':
                 loadingScroll = false;
                 loadingIconElement.style.display = "none";
@@ -179,33 +182,32 @@ function getFormatter(columnType) {
         if ((event.ctrlKey || event.metaKey) && event.code == "Enter") {
             event.preventDefault();
             event.stopPropagation();
-            textAreaElement.dispatchEvent(new Event("change"));
+            runQuery();
         }
     }
 
-    let controlsHeight = 0;
     const onInput = (event) => {
-        const height = document.getElementById("controls").offsetHeight;
-        if (controlsHeight != height) {
-            controlsHeight = height;
-        }
-
         vscode.setState({ sql: event.target.parentElement.value })
     }
 
-    const onChange = (event) => {
-        const sql = event.target.parentElement.value;
+    const onChange = () => {
+        if (autoQuery) {
+            runQuery();
+        }
+    }
+
+    const runQuery = () => {
+        const sql = textAreaElement.parentElement.value;
 
         // Ctrl/Cmd + Enter causes onChange to be called twice
-        if (sql === last_sql)
-            return;
+        if (sql === last_sql) return;
         last_sql = sql;
 
         loadingScroll = true;
-        tableElement.style.display = "none"
-        loadingIconElement.style.display = "block"
+        tableElement.style.display = "none";
+        loadingIconElement.style.display = "block";
         errorMessageElement.style.display = "none";
-        textAreaElement.disabled = true
+        textAreaElement.disabled = true;
 
         if (table) {
             table.replaceData([]);
@@ -216,9 +218,8 @@ function getFormatter(columnType) {
             type: 'query',
             sql: sql,
             limit: CHUNK_SIZE,
-        })
-
-    }
+        });
+    };
 
     waitForElements(["textarea", "#results", "#loadingIcon", "#errorMessage"]).then(([textarea, results, loadingIcon, errorMessage]) => {
         textAreaElement = textarea;

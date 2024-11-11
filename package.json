@@ -44,6 +44,11 @@
                     "default": 100,
                     "minimum": 30,
                     "markdownDescription": "Number of query results to fetch per request."
+                },
+                "flat-file-explorer.autoQuery": {
+                    "type": "boolean",
+                    "default": true,
+                    "markdownDescription": "Automatically dispatch queries as the input changes. If false, queries are only dispatched on Ctrl + Enter."
                 }
             }
         },

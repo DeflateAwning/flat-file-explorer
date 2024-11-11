@@ -5,13 +5,13 @@ import { parse } from "path"
 
 import * as duckdb from 'duckdb';
 
-interface IMessage {
+type IMessage = {
     type: 'query' | 'more';
     success: boolean;
     message?: string;
     results?: duckdb.TableData;
     describe?: duckdb.TableData;
-}
+} | { type: 'config', autoQuery: boolean };
 
 /**
  * Define the document (the data model) used for paw draw files.
@@ -158,6 +158,13 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
         webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document.uri);
 
         webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, webviewPanel, e));
+
+        // Send the autoQuery configuration to the webview
+        const config = vscode.workspace.getConfiguration('flat-file-explorer')
+        this.postMessage(webviewPanel, {
+            type: 'config',
+            autoQuery: config.get('autoQuery')!
+        });
     }
 
 

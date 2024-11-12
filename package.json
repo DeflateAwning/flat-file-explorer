@@ -47,7 +47,7 @@
                 },
                 "flat-file-explorer.autoQuery": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "markdownDescription": "Automatically dispatch queries as the input changes. If false, queries are only dispatched on Ctrl + Enter."
                 }
             }

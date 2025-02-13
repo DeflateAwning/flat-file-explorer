@@ -1,15 +1,15 @@
 {
-    "name": "parquet-explorer",
-    "displayName": "Parquet Explorer",
-    "description": "Explore Parquet files with SQL. Powered by DuckDB",
-    "version": "1.2.1",
-    "publisher": "AdamViola",
+    "name": "flat-file-explorer",
+    "displayName": "Flat File Explorer",
+    "description": "Explore Parquet and CSV files with SQL. Powered by DuckDB",
+    "version": "2.0.0",
+    "publisher": "DeflateAwning",
     "icon": "icon.png",
     "private": true,
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/adamviola/parquet-explorer"
+        "url": "https://github.com/DeflateAwning/flat-file-explorer"
     },
     "engines": {
         "vscode": "^1.74.0"
@@ -21,25 +21,25 @@
     "main": "./out/extension.js",
     "contributes": {
         "configuration": {
-            "title": "Parquet Explorer",
+            "title": "Flat File Explorer",
             "properties": {
-                "parquet-explorer.defaultQuery": {
+                "flat-file-explorer.defaultQuery": {
                     "type": "string",
                     "editPresentation": "multilineText",
                     "default": "SELECT * FROM ${tableName}",
                     "markdownDescription": "Use `${tableName}` to include the table name of the Parquet file."
                 },
-                "parquet-explorer.tableName": {
+                "flat-file-explorer.tableName": {
                     "type": "string",
                     "default": "data",
-                    "markdownDescription": "SQL table name associated with the Parquet file. May be overridden by `#parquet-explorer.useFileNameAsTableName#`."
+                    "markdownDescription": "SQL table name associated with the Parquet file. May be overridden by `#flat-file-explorer.useFileNameAsTableName#`."
                 },
-                "parquet-explorer.useFileNameAsTableName": {
+                "flat-file-explorer.useFileNameAsTableName": {
                     "type": "boolean",
                     "default": false,
-                    "markdownDescription": "Whether the file name is used as the SQL table name of the Parquet file. Overrides `#parquet-explorer.tableName#`."
+                    "markdownDescription": "Whether the file name is used as the SQL table name of the Parquet file. Overrides `#flat-file-explorer.tableName#`."
                 },
-                "parquet-explorer.chunkSize": {
+                "flat-file-explorer.chunkSize": {
                     "type": "integer",
                     "default": 100,
                     "minimum": 30,
@@ -49,8 +49,8 @@
         },
         "customEditors": [
             {
-                "viewType": "parquetExplorer.explorer",
-                "displayName": "Parquet Explorer",
+                "viewType": "flatFileExplorer.explorer",
+                "displayName": "Flat File Explorer",
                 "selector": [
                     {
                         "filenamePattern": "*.parquet"

@@ -9,7 +9,7 @@ execution against Apache Parquet and CSV files. Under the hood, SQL queries are 
 by [DuckDB](https://duckdb.org/), which implements efficient partial reading and
 parallel query processing.
 
-![Demonstration of Flat File Explorer against iris.parquet](./iris.gif)
+![Demonstration of Flat File Explorer against iris.parquet](./docs/iris.gif)
 
 ## Quick Start
 

@@ -2,7 +2,7 @@
     "name": "flat-file-explorer",
     "displayName": "Flat File Explorer",
     "description": "Explore Parquet and CSV files with DuckDB SQL",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "publisher": "DeflateAwning",
     "icon": "icon.png",
     "private": true,

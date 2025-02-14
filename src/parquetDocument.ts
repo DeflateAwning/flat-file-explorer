@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import { Disposable } from './dispose';
 import { getNonce } from './util';
-import { parse } from "path"
-
+import { parse, extname } from "path"
 import * as duckdb from 'duckdb';
+
+const CSV_EXTENSIONS = [".csv"];
+const PARQUET_EXTENSIONS = [".pq", ".parq", ".parquet"];
 
 type IMessage = {
     type: 'query' | 'more';
@@ -14,7 +16,7 @@ type IMessage = {
 } | { type: 'config', autoQuery: boolean };
 
 /**
- * Define the document (the data model) used for paw draw files.
+ * Define the document (the data model) used for table files.
  */
 class ParquetDocument extends Disposable implements vscode.CustomDocument {
 
@@ -35,14 +37,25 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
         this._uri = uri;
         this._db = new duckdb.Database(':memory:');
 
-        const config = vscode.workspace.getConfiguration('flat-file-explorer')
+        const config = vscode.workspace.getConfiguration('flat-file-explorer');
         let tableName: string = config.get("tableName")!;
         if (config.get("useFileNameAsTableName"))
-            tableName = parse(uri.fsPath).name
+            tableName = parse(uri.fsPath).name;
 
-        this.db.exec(
-            `CREATE VIEW ${tableName} AS SELECT * FROM read_parquet('${uri.fsPath}');`
-        );
+        const fileExtension = extname(uri.fsPath).toLowerCase();
+        let query = "";
+
+        if (CSV_EXTENSIONS.includes(fileExtension)) {
+            query = `CREATE VIEW ${tableName} AS SELECT * FROM read_csv('${uri.fsPath}');`;
+        } else if (PARQUET_EXTENSIONS.includes(fileExtension)) {
+            query = `CREATE VIEW ${tableName} AS SELECT * FROM read_parquet('${uri.fsPath}');`;
+        } else {
+            // If this error occurs, check that the trigger types in `package.json` are in sync
+            // with the extension definition arrays at the top of this file.
+            throw new Error("Unsupported file type. Should not have opened with Flat File Explorer.");
+        }
+
+        this.db.exec(query);
     }
 
     public get uri() { return this._uri; }

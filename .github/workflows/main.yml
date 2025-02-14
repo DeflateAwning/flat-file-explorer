@@ -1,5 +1,12 @@
 on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
   workflow_dispatch:
+
 jobs:
   package:
     name: Package Extension
@@ -17,6 +24,7 @@ jobs:
         npm install --global @vscode/vsce
         ./package.sh
     - name: Upload extension
+      if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v4
       with:
         path: ./dist/*

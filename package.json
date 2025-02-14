@@ -65,6 +65,9 @@
                     },
                     {
                         "filenamePattern": "*.pq"
+                    },
+                    {
+                        "filenamePattern": "*.csv"
                     }
                 ],
                 "priority": "default"

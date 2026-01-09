@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
+    "strict": true,
+
+    "rootDir": "src",
+    "outDir": "out",
+
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts"]
+}

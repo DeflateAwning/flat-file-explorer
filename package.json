@@ -75,7 +75,7 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "rm -rf ./out; mkdir ./out ./out/binding/; cp ./node_modules/duckdb/lib/binding/duckdb.node ./out/binding/; esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:nock --external:aws-sdk --external:mock-aws-s3 --format=cjs --platform=node --minify",
+        "vscode:prepublish": "rm -rf ./out && mkdir -p ./out/binding/ && cp ./node_modules/duckdb/lib/binding/duckdb.node ./out/binding/ && tsc -p tsconfig.media.json && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:nock --external:aws-sdk --external:mock-aws-s3 --format=cjs --platform=node --minify",
         "compile": "tsc -p tsconfig.extension.json && tsc -p tsconfig.media.json",
         "watch": "tsc -w -p ./",
         "lint": "eslint \"src/**/*.ts\""

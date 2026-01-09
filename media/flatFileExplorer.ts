@@ -128,8 +128,9 @@ interface CodeInputElement extends HTMLElement {
     let table: any = null;
     let lastSql: string | undefined;
 
-    // Whether the spinner is currently showing
-    let loadingScroll = false;
+    // Whether the spinner is currently showing.
+    let loadingQuery = false;
+    let loadingMore = false;
 
     // Whether or not there's additional query results to load
     let moreToLoad = false;
@@ -147,7 +148,7 @@ interface CodeInputElement extends HTMLElement {
                 break;
 
             case "query":
-                loadingScroll = false;
+                loadingQuery = false;
                 loadingIconElement!.style.display = "none";
                 textAreaElement!.disabled = false;
 
@@ -196,10 +197,10 @@ interface CodeInputElement extends HTMLElement {
                             const element = table.rowManager.element;
                             if (
                                 top >= element.scrollHeight - element.offsetHeight &&
-                                !loadingScroll &&
+                                !loadingMore &&
                                 moreToLoad
                             ) {
-                                loadingScroll = true;
+                                loadingMore = true;
                                 scrollOffset += CHUNK_SIZE;
 
                                 loadingIconElement!.style.display = "block";
@@ -224,7 +225,7 @@ interface CodeInputElement extends HTMLElement {
                 break;
 
             case "more":
-                loadingScroll = false;
+                loadingMore = false;
                 loadingIconElement!.style.display = "none";
                 textAreaElement!.disabled = false;
 
@@ -273,7 +274,9 @@ interface CodeInputElement extends HTMLElement {
         if (sql === lastSql) return;
         lastSql = sql;
 
-        loadingScroll = true;
+        loadingQuery = true;
+        loadingMore = false;
+
         tableElement!.style.display = "none";
         loadingIconElement!.style.display = "block";
         errorMessageElement!.style.display = "none";
@@ -289,6 +292,16 @@ interface CodeInputElement extends HTMLElement {
             sql,
             limit: CHUNK_SIZE,
         });
+
+        // Prevent permanent UI lockups if the extension crashes.
+        setTimeout(() => {
+            if (loadingQuery) {
+                loadingQuery = false;
+                loadingIconElement!.style.display = "none";
+                textAreaElement!.disabled = false;
+            }
+        }, 30_000);
+
     };
 
     // ---------- Init ----------

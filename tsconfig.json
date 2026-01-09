@@ -3,15 +3,21 @@
         "module": "commonjs",
         "target": "es2020",
         "lib": [
-            "es2020"
+            "es2020",
+            "DOM"
         ],
         "outDir": "out",
         "sourceMap": true,
         "strict": true,
-        "rootDir": "src",
+        "rootDir": "."
     },
+    "include": [
+        "src/**/*.ts",
+        "media/**/*.ts"
+    ],
     "exclude": [
         "node_modules",
-        ".vscode-test"
-    ],
+        ".vscode-test",
+        "out"
+    ]
 }

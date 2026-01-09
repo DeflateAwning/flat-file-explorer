@@ -103,7 +103,16 @@ interface MoreMessage {
     results: unknown[];
 }
 
-type IncomingMessage = QueryMessage | MoreMessage;
+interface ConfigMessage {
+    type: "config";
+    autoQuery?: boolean;
+}
+
+type IncomingMessage = QueryMessage | MoreMessage | ConfigMessage;
+
+interface CodeInputElement extends HTMLElement {
+    value: string;
+}
 
 // ---------- Main ----------
 
@@ -196,7 +205,7 @@ type IncomingMessage = QueryMessage | MoreMessage;
                                 loadingIconElement!.style.display = "block";
                                 textAreaElement!.disabled = true;
 
-                                const sql = textAreaElement!.parentElement!.value;
+                                const sql = (textAreaElement!.parentElement as CodeInputElement).value;
 
                                 vscode.postMessage({
                                     type: "more",
@@ -248,7 +257,7 @@ type IncomingMessage = QueryMessage | MoreMessage;
 
     const onInput = (event: Event) => {
         const target = event.target as HTMLTextAreaElement;
-        vscode.setState({ sql: target.parentElement!.value });
+        vscode.setState({ sql: (target.parentElement as CodeInputElement).value });
     };
 
     const onChange = () => {
@@ -258,7 +267,7 @@ type IncomingMessage = QueryMessage | MoreMessage;
     };
 
     const runQuery = () => {
-        const sql = textAreaElement!.parentElement!.value;
+        const sql = (textAreaElement!.parentElement as CodeInputElement).value;
 
         // Ctrl/Cmd + Enter causes onChange to be called twice
         if (sql === lastSql) return;
@@ -291,13 +300,13 @@ type IncomingMessage = QueryMessage | MoreMessage;
             loadingIconElement = loadingIcon as HTMLElement;
             errorMessageElement = errorMessage as HTMLElement;
 
-            textarea.addEventListener("input", onInput);
-            textarea.addEventListener("change", onChange);
-            textarea.addEventListener("keydown", onKeyDown, true);
+            textAreaElement.addEventListener("input", onInput);
+            textAreaElement.addEventListener("change", onChange);
+            textAreaElement.addEventListener("keydown", onKeyDown, true);
 
             const state = vscode.getState();
             if (state?.sql) {
-                textarea.parentElement!.value = state.sql;
+                (textarea.parentElement as CodeInputElement).value = state.sql;
             }
 
             textarea.dispatchEvent(new Event("input"));

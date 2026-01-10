@@ -224,8 +224,9 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
      * Get the static HTML used for in our editor's webviews.
      */
     private getHtmlForWebview(webview: vscode.Webview, uri: vscode.Uri): string {
-        // Local path to script and css for the webview
+        // Local path to script and css for the webview.
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(
+            // Compiled from `src/webview/webview.ts`.
             this._context.extensionUri, 'out', 'webview.js'));
 
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(

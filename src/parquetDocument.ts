@@ -229,6 +229,10 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
             // Compiled from `src/webview/webview.ts`.
             this._context.extensionUri, 'out', 'webview.js'));
 
+        const monacoUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(this._context.extensionUri, 'media', 'monaco')
+        );
+
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(
             this._context.extensionUri, 'media', 'flatFileExplorer.css'));
 
@@ -284,13 +288,27 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
                 Use a content security policy to only allow loading images from https or from our extension directory,
                 and only allow scripts that have a specific nonce.
                 -->
-                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} blob:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+                <meta http-equiv="Content-Security-Policy"
+                    content="
+                        default-src 'none';
+                        img-src ${webview.cspSource} blob:;
+                        style-src ${webview.cspSource} 'unsafe-inline';
+                        script-src ${webview.cspSource} 'nonce-${nonce}' 'unsafe-eval';
+                        script-src-elem ${webview.cspSource} 'nonce-${nonce}';
+                        worker-src blob:;
+                    ">
 
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
                 <script nonce="${nonce}">
                     const CHUNK_SIZE = ${vscode.workspace.getConfiguration('flat-file-explorer').get("chunkSize")}
                 </script>
+
+                <script nonce="${nonce}">
+                    const MONACO_BASE_URL = "${monacoUri}";
+                </script>
+
+                <script nonce="${nonce}" src="${monacoUri}/vs/loader.js"></script>
 
                 <script nonce="${nonce}" src="${luxonJsUri}"></script>
 
@@ -313,7 +331,7 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
             <body>
                 <div id="controls">
                     <div class="query-toolbar">
-                        <code-input nonce="${nonce}" lang="SQL" value="${defaultQuery}"></code-input>
+                        <div id="editor" style="height: 150px; width: 100%;"></div>
 
                         <div class="query-actions">
                             <button id="executeQueryButton" class="action-button primary">

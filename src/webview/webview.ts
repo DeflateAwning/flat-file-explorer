@@ -384,4 +384,59 @@ interface CodeInputElement extends HTMLElement {
             updateQueryHint();
         }
     );
+
+
+    require.config({
+        paths: {
+            vs: `${MONACO_BASE_URL}/vs`
+        }
+    });
+
+    require(['vs/editor/editor.main'], () => {
+        const editor = monaco.editor.create(
+            document.getElementById('editor')!,
+            {
+                value: "SELECT * FROM data",
+                language: 'sql',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 13,
+            }
+        );
+
+        // Execute query
+        document
+            .getElementById('executeQueryButton')!
+            .addEventListener('click', () => {
+                vscode.postMessage({
+                    type: 'query',
+                    sql: editor.getValue(),
+                    limit: CHUNK_SIZE
+                });
+            });
+
+        // Copy full query
+        document
+            .getElementById('copyFullQueryButton')!
+            .addEventListener('click', () => {
+                vscode.postMessage({
+                    type: 'copy',
+                    sql: editor.getValue()
+                });
+            });
+
+        // Handle messages from extension
+        window.addEventListener('message', event => {
+            const message = event.data;
+            if (message.type === 'reloadBaseView') {
+                // optional: no-op
+            }
+        });
+    });
+
 })();
+
+declare const require: any;
+declare const monaco: any;
+declare const MONACO_BASE_URL: string;

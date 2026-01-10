@@ -270,7 +270,6 @@ interface CodeInputElement extends HTMLElement {
             event.preventDefault();
             event.stopPropagation();
             runQuery();
-            updateQueryHint();
         }
     };
 

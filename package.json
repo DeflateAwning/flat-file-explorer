@@ -75,10 +75,12 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "rm -rf ./out && mkdir -p ./out/binding/ && cp ./node_modules/duckdb/lib/binding/duckdb.node ./out/binding/ && tsc -p tsconfig.media.json && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:nock --external:aws-sdk --external:mock-aws-s3 --format=cjs --platform=node --minify",
-        "compile": "tsc -p tsconfig.extension.json && tsc -p tsconfig.media.json",
-        "watch": "tsc -w -p ./",
-        "lint": "eslint \"src/**/*.ts\""
+        "build:webview": "node esbuild.webview.js",
+        "build:extension": "tsc -p .",
+        "compile": "npm run build:extension && npm run build:webview",
+        "watch:extension": "tsc -w -p ./",
+        "lint": "eslint \"src/**/*.ts\"",
+        "vscode:prepublish": "rm -rf ./out && mkdir -p ./out/binding/ && cp ./node_modules/duckdb/lib/binding/duckdb.node ./out/binding/ && npm run compile && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --external:nock --external:aws-sdk --external:mock-aws-s3 --format=cjs --platform=node --minify"
     },
     "devDependencies": {
         "@types/node": "^16.18.34",

@@ -10,6 +10,7 @@
 5. `npm install`
 6. Open the `src/extensions.ts` file.
 7. Press F5 in VSCode to launch the extension in the VSCode Extension Development Host.
+8. In the temporary testing window, press Ctrl+Shift+I to open Inspect Element/Dev Tools. The Console there is the best debugging tool.
 
 ## Publishing a Release
 

@@ -1,19 +1,13 @@
 import * as vscode from 'vscode';
 import { Disposable } from './dispose';
 import { getNonce } from './util';
+import { BackToFrontMessage, FrontToBackMessage, DescribeColumn } from './messages';
 import { parse, extname } from "path"
 import * as duckdb from 'duckdb';
 
 const CSV_EXTENSIONS = [".csv"];
 const PARQUET_EXTENSIONS = [".pq", ".parq", ".parquet"];
 
-type IMessage = {
-    type: 'query' | 'more';
-    success: boolean;
-    message?: string;
-    results?: duckdb.TableData;
-    describe?: duckdb.TableData;
-} | { type: 'config', autoQuery: boolean } | { type: 'reloadBaseView' };
 
 /**
  * Define the document (the data model) used for table files.
@@ -106,7 +100,7 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
         return results;
     }
 
-    runQuery(sql: string, limit: number, callback: (msg: IMessage) => void): void {
+    runQuery(sql: string, limit: number, callback: (msg: BackToFrontMessage) => void): void {
         // Fetch resulting column names and types
         this.db.all(
             `DESCRIBE (${sql.replace(';', '')});`,
@@ -124,14 +118,19 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
                             callback({ type: 'query', success: false, message: err.message });
                             return;
                         }
-                        callback({ type: 'query', success: true, results: this.cleanResults(res), describe: descRes });
+                        callback({
+                            type: 'query',
+                            success: true,
+                            results: this.cleanResults(res),
+                            describe: translateDescribe(descRes)
+                        });
                     }
                 );
             }
         );
     }
 
-    fetchMore(sql: string, limit: number, offset: number, callback: (msg: IMessage) => void): void {
+    fetchMore(sql: string, limit: number, offset: number, callback: (msg: BackToFrontMessage) => void): void {
         this.db.all(
             this.formatSql(sql, limit, offset),
             (err, res) => {
@@ -149,6 +148,12 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
     }
 }
 
+function translateDescribe(descRes: duckdb.TableData): DescribeColumn[] {
+    return descRes.map(row => ({
+        column_name: String(row.column_name),
+        column_type: String(row.column_type),
+    }));
+}
 
 export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvider<ParquetDocument> {
 
@@ -335,18 +340,24 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
     }
 
 
-    private postMessage(panel: vscode.WebviewPanel, message: IMessage): void {
+    private postMessage(panel: vscode.WebviewPanel, message: BackToFrontMessage): void {
         panel.webview.postMessage(message);
     }
 
     /** Handle incoming message. */
-    private onMessage(document: ParquetDocument, panel: vscode.WebviewPanel, message: any) {
+    private onMessage(document: ParquetDocument, panel: vscode.WebviewPanel, message: FrontToBackMessage) {
         switch (message.type) {
             case 'query':
-                document.runQuery(message.sql, message.limit, (msg: IMessage) => this.postMessage(panel, msg));
+                document.runQuery(
+                    message.sql, message.limit,
+                    (msg: BackToFrontMessage) => this.postMessage(panel, msg)
+                );
                 return;
             case 'more':
-                document.fetchMore(message.sql, message.limit, message.offset, (msg: IMessage) => this.postMessage(panel, msg));
+                document.fetchMore(
+                    message.sql, message.limit, message.offset,
+                    (msg: BackToFrontMessage) => this.postMessage(panel, msg)
+                );
                 return;
             case 'copy':
                 let fullQuery = `${document.createViewSql}\n\n${message.sql.trim()}`;

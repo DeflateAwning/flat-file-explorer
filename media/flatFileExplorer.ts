@@ -1,10 +1,12 @@
+import { BackToFrontMessage, FrontToBackMessage, DescribeColumn } from '../src/messages';
+
 // ---------- Utility Types ----------
 
 type Nullable<T> = T | null;
 
 // VS Code Webview API
 interface VSCodeApi<T = unknown> {
-    postMessage(message: unknown): void;
+    postMessage(message: FrontToBackMessage): void;
     getState(): T | undefined;
     setState(state: T): void;
 }
@@ -94,34 +96,6 @@ function getFormatter(columnType: string): Record<string, unknown> {
 
 // ---------- Message Types ----------
 
-interface DescribeColumn {
-    column_name: string;
-    column_type: string;
-}
-
-interface QueryMessage {
-    type: "query";
-    results?: unknown[];
-    describe?: DescribeColumn[];
-    message?: string;
-}
-
-interface MoreMessage {
-    type: "more";
-    results: unknown[];
-}
-
-interface ConfigMessage {
-    type: "config";
-    autoQuery?: boolean;
-}
-
-interface ReloadBaseViewMessage {
-    type: "reloadBaseView";
-}
-
-type IncomingMessage = QueryMessage | MoreMessage | ConfigMessage | ReloadBaseViewMessage;
-
 interface CodeInputElement extends HTMLElement {
     value: string;
 }
@@ -155,8 +129,8 @@ interface CodeInputElement extends HTMLElement {
     // Offset to use when fetching additional results
     let scrollOffset = 0;
 
-    // Handle messages sent from the extension to the webview
-    window.addEventListener("message", (event: MessageEvent<IncomingMessage>) => {
+    // Handle messages sent from the extension to the webview.
+    window.addEventListener("message", (event: MessageEvent<BackToFrontMessage>) => {
         const message = event.data;
 
         switch (message.type) {
@@ -247,11 +221,11 @@ interface CodeInputElement extends HTMLElement {
                 loadingIconElement!.style.display = "none";
                 textAreaElement!.disabled = false;
 
-                if (message.results.length < CHUNK_SIZE) {
+                if (message.results && (message.results.length < CHUNK_SIZE)) {
                     moreToLoad = false;
                 }
 
-                if (message.results.length > 0 && table) {
+                if (message.results && (message.results.length > 0) && table) {
                     table.addData(message.results);
                 }
                 break;

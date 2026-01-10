@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["DOM", "es2020"],
+    "strict": true,
+
+    "rootDir": ".",
+    "outDir": "out",
+
+    "sourceMap": true
+  },
+  "include": ["./media/flatFileExplorer.ts", "./src/messages.ts"],
+  "exclude": ["./src/**/*.ts"]
+}

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Disposable } from './dispose';
 import { getNonce } from './util';
-import { BackToFrontMessage, FrontToBackMessage, DescribeColumn } from './messages';
+import { BackToFrontMessage, FrontToBackMessage, DescribeColumn } from './shared/messages';
 import { parse, extname } from "path"
 import * as duckdb from 'duckdb';
 
@@ -226,7 +226,7 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
     private getHtmlForWebview(webview: vscode.Webview, uri: vscode.Uri): string {
         // Local path to script and css for the webview
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            this._context.extensionUri, 'out', 'media', 'flatFileExplorer.js'));
+            this._context.extensionUri, 'out', 'webview.js'));
 
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(
             this._context.extensionUri, 'media', 'flatFileExplorer.css'));

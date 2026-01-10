@@ -1,4 +1,4 @@
-import { BackToFrontMessage, FrontToBackMessage, DescribeColumn } from '../src/messages';
+import { BackToFrontMessage, FrontToBackMessage, DescribeColumn } from '../shared/messages';
 
 // ---------- Utility Types ----------
 

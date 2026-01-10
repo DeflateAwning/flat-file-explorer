@@ -13,7 +13,7 @@ type IMessage = {
     message?: string;
     results?: duckdb.TableData;
     describe?: duckdb.TableData;
-} | { type: 'config', autoQuery: boolean };
+} | { type: 'config', autoQuery: boolean } | { type: 'reloadBaseView' };
 
 /**
  * Define the document (the data model) used for table files.
@@ -46,9 +46,9 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
         const fileExtension = extname(uri.fsPath).toLowerCase();
 
         if (CSV_EXTENSIONS.includes(fileExtension)) {
-            this._createViewSql = `CREATE VIEW ${tableName} AS SELECT * FROM read_csv('${uri.fsPath}');`;
+            this._createViewSql = `CREATE OR REPLACE VIEW ${tableName} AS SELECT * FROM read_csv('${uri.fsPath}');`;
         } else if (PARQUET_EXTENSIONS.includes(fileExtension)) {
-            this._createViewSql = `CREATE VIEW ${tableName} AS SELECT * FROM read_parquet('${uri.fsPath}');`;
+            this._createViewSql = `CREATE OR REPLACE VIEW ${tableName} AS SELECT * FROM read_parquet('${uri.fsPath}');`;
         } else {
             // If this error occurs, check that the trigger types in `package.json` are in sync
             // with the extension definition arrays at the top of this file.
@@ -143,6 +143,10 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
             }
         );
     }
+
+    reloadBaseView(): void {
+        this.db.exec(this._createViewSql);
+    }
 }
 
 
@@ -177,13 +181,30 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
         _token: vscode.CancellationToken
     ): Promise<void> {
         // Setup initial content for the webview.
-        webviewPanel.webview.options = {
-            enableScripts: true,
-        };
+        webviewPanel.webview.options = { enableScripts: true };
 
         webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document.uri);
 
         webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, webviewPanel, e));
+
+        // Monitor the open file for changes so we can re-query if it changes.
+        const watcher = vscode.workspace.createFileSystemWatcher(
+            new vscode.RelativePattern(
+                vscode.Uri.file(document.uri.fsPath).with({ path: document.uri.fsPath }).fsPath,
+                '*'
+            )
+        );
+
+        const reload = () => {
+            document.reloadBaseView();
+            this.postMessage(webviewPanel, { type: 'reloadBaseView' });
+        };
+
+        watcher.onDidChange(reload);
+        watcher.onDidCreate(reload);
+        watcher.onDidDelete(reload);
+
+        webviewPanel.onDidDispose(() => watcher.dispose());
 
         // Send the autoQuery configuration to the webview.
         const config = vscode.workspace.getConfiguration('flat-file-explorer')
@@ -286,11 +307,7 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
             <body>
                 <div id="controls">
                     <div class="query-toolbar">
-                        <code-input
-                            nonce="${nonce}"
-                            lang="SQL"
-                            value="${defaultQuery}">
-                        </code-input>
+                        <code-input nonce="${nonce}" lang="SQL" value="${defaultQuery}"></code-input>
 
                         <div class="query-actions">
                             <button id="executeQueryButton" class="action-button primary">

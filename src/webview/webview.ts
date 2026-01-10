@@ -15,8 +15,6 @@ declare function acquireVsCodeApi<T = unknown>(): VSCodeApi<T>;
 
 // External globals (no typings assumed)
 declare const Tabulator: any;
-declare const Prism: any;
-declare const codeInput: any;
 declare const CHUNK_SIZE: number;
 
 // ---------- DOM Helpers ----------

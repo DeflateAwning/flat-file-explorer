@@ -236,21 +236,6 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(
             this._context.extensionUri, 'media', 'flatFileExplorer.css'));
 
-        const codeInputJsUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            this._context.extensionUri, 'media', 'code-input.min.js'));
-
-        const codeInputCssUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            this._context.extensionUri, 'media', 'code-input.min.css'));
-
-        const indentJsUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            this._context.extensionUri, 'media', 'indent.min.js'));
-
-        const prismJsUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            this._context.extensionUri, 'media', 'prism.js'));
-
-        const prismCssUri = webview.asWebviewUri(vscode.Uri.joinPath(
-            this._context.extensionUri, 'media', 'prism.css'));
-
         const luxonJsUri = webview.asWebviewUri(vscode.Uri.joinPath(
             this._context.extensionUri, 'media', 'luxon.min.js'));
 
@@ -314,14 +299,6 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
                 </script>
 
                 <script nonce="${nonce}" src="${monacoUri}/vs/loader.js"></script>
-
-                <script nonce="${nonce}" src="${prismJsUri}"></script>
-                <link rel="stylesheet" href="${prismCssUri}">
-
-                <script nonce="${nonce}" src="${codeInputJsUri}"></script>
-                <link rel="stylesheet" href="${codeInputCssUri}">
-
-                <script nonce="${nonce}" src="${indentJsUri}"></script>
 
                 <script nonce="${nonce}" src="${jsUri}"></script>
                 <link rel="stylesheet" href="${cssUri}">

@@ -115,6 +115,8 @@ interface CodeInputElement extends HTMLElement {
     let executeQueryButtonElement: Nullable<HTMLElement> = null;
     let copyFullQueryButtonElement: Nullable<HTMLElement> = null;
 
+    let monacoEditor: any = null;
+
     let table: any = null;
     let lastSql: string | undefined;
     let lastQueryTimestampMs: Nullable<number> = null;
@@ -236,13 +238,12 @@ interface CodeInputElement extends HTMLElement {
         }
     });
 
-    // Initialize the text area syntax highlighting
-    codeInput.registerTemplate(
-        "syntax-highlighted",
-        codeInput.templates.prism(Prism, [new codeInput.plugins.Indent()])
-    );
-
     const readSqlQueryFromBox = () => {
+        if (monacoEditor) {
+            return monacoEditor.getValue();
+        }
+
+        // Fallback for pre-Monaco / safety
         return (textAreaElement!.parentElement as CodeInputElement).value;
     };
 
@@ -386,6 +387,7 @@ interface CodeInputElement extends HTMLElement {
     );
 
 
+    // Construct Monaco editor.
     require.config({
         paths: {
             vs: `${MONACO_BASE_URL}/vs`
@@ -393,48 +395,42 @@ interface CodeInputElement extends HTMLElement {
     });
 
     require(['vs/editor/editor.main'], () => {
-        const editor = monaco.editor.create(
-            document.getElementById('editor')!,
-            {
-                value: "SELECT * FROM data",
-                language: 'sql',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                minimap: { enabled: false },
-                fontSize: 13,
-            }
-        );
+        const editorContainer = document.getElementById('editor')!;
+        const initialSql =
+            vscode.getState()?.sql ??
+            "SELECT * FROM data";
 
-        // Execute query
-        document
-            .getElementById('executeQueryButton')!
-            .addEventListener('click', () => {
-                vscode.postMessage({
-                    type: 'query',
-                    sql: editor.getValue(),
-                    limit: CHUNK_SIZE
-                });
-            });
+        monacoEditor = monaco.editor.create(editorContainer, {
+            value: initialSql,
+            language: 'sql',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            fontSize: 13,
+        });
 
-        // Copy full query
-        document
-            .getElementById('copyFullQueryButton')!
-            .addEventListener('click', () => {
-                vscode.postMessage({
-                    type: 'copy',
-                    sql: editor.getValue()
-                });
-            });
+        // Persist editor changes
+        monacoEditor.onDidChangeModelContent(() => {
+            vscode.setState({ sql: monacoEditor.getValue() });
+            updateQueryHint();
 
-        // Handle messages from extension
-        window.addEventListener('message', event => {
-            const message = event.data;
-            if (message.type === 'reloadBaseView') {
-                // optional: no-op
+            if (autoQuery) {
+                onChange();
             }
         });
-    });
 
+        // Ctrl/Cmd + Enter
+        monacoEditor.addCommand(
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+            () => runQuery()
+        );
+
+        // Enable SQL language support. // TODO: Implement.
+        // monaco.languages.sql.sqlDefaults.setDiagnosticsOptions({
+        //     validate: true,
+        //     completionItems: true,
+        // });
+    });
 })();
 
 declare const require: any;

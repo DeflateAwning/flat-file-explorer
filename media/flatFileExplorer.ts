@@ -64,6 +64,15 @@ function waitForElements<T extends readonly string[]>(
     });
 }
 
+function createQueryHint(container: HTMLElement): HTMLElement {
+    const hint = document.createElement("div");
+    hint.textContent = "Ctrl+Enter to query";
+    hint.className = "query-hint";
+    container.appendChild(hint);
+    return hint;
+}
+
+
 // ---------- Tabulator Helpers ----------
 
 // https://tabulator.info/docs/6.2/format
@@ -120,6 +129,7 @@ interface CodeInputElement extends HTMLElement {
     const vscode = acquireVsCodeApi<{ sql?: string }>();
 
     let autoQuery = true;
+    let queryHintElement: Nullable<HTMLElement> = null;
 
     let textAreaElement: Nullable<HTMLTextAreaElement> = null;
     let loadingIconElement: Nullable<HTMLElement> = null;
@@ -145,6 +155,7 @@ interface CodeInputElement extends HTMLElement {
         switch (message.type) {
             case "config":
                 autoQuery = !!message.autoQuery;
+                updateQueryHint();
                 break;
 
             case "query":
@@ -253,12 +264,15 @@ interface CodeInputElement extends HTMLElement {
             event.preventDefault();
             event.stopPropagation();
             runQuery();
+            updateQueryHint();
         }
     };
 
     const onInput = (event: Event) => {
         const target = event.target as HTMLTextAreaElement;
         vscode.setState({ sql: (target.parentElement as CodeInputElement).value });
+
+        updateQueryHint();
     };
 
     const onChange = () => {
@@ -270,7 +284,7 @@ interface CodeInputElement extends HTMLElement {
     const runQuery = () => {
         const sql = (textAreaElement!.parentElement as CodeInputElement).value;
 
-        // Ctrl/Cmd + Enter causes onChange to be called twice
+        // Ctrl/Cmd + Enter causes onChange to be called twice.
         if (sql === lastSql) return;
         lastSql = sql;
 
@@ -304,6 +318,26 @@ interface CodeInputElement extends HTMLElement {
 
     };
 
+    const updateQueryHint = () => {
+        if (!queryHintElement) return;
+
+        queryHintElement.classList.toggle("visible", (!autoQuery && (lastSql != vscode.getState()?.sql)));
+
+        // Update the hint position based on scrollbar presence.
+        const wrapper = queryHintElement.parentElement;
+        if (wrapper) {
+            queryHintElement.style.bottom = wrapper.scrollWidth > wrapper.clientWidth ? "2px" : "16px";
+        }
+    };
+
+    const getQueryShortcutLabel = () => {
+        const isMac =
+            navigator.platform.includes("Mac") ||
+            navigator.userAgent.includes("Mac OS");
+
+        return isMac ? "⌘⏎ to query" : "Ctrl+Enter to query";
+    };
+
     // ---------- Init ----------
 
     waitForElements(["textarea", "#results", "#loadingIcon", "#errorMessage"] as const).then(
@@ -324,6 +358,21 @@ interface CodeInputElement extends HTMLElement {
 
             textarea.dispatchEvent(new Event("input"));
             textarea.dispatchEvent(new Event("change"));
+            const wrapper = textarea.parentElement as HTMLElement;
+
+            // Create hint to press Ctrl+Enter to query.
+            // Ensure positioning context.
+            if (getComputedStyle(wrapper).position === "static") {
+                wrapper.style.position = "relative";
+                const SCROLLBAR_SAFE_INSET = 14; // works across platforms
+                wrapper.style.paddingBottom ||= `${SCROLLBAR_SAFE_INSET}px`;
+            }
+            // Create hint.
+            queryHintElement = document.createElement("div");
+            queryHintElement.className = "query-hint";
+            queryHintElement.textContent = getQueryShortcutLabel();
+            wrapper.appendChild(queryHintElement);
+            updateQueryHint();
         }
     );
 })();

@@ -131,3 +131,26 @@ code-input pre {
     font-weight: bold;
     border-radius: 5px;
 }
+
+.query-hint {
+    position: absolute;
+    right: 8px;
+    bottom: 2px; /* relative to padded content */
+    padding: 2px 6px;
+    font-size: 11px;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 4px;
+    background: var(--vscode-editorHoverWidget-background);
+    color: var(--vscode-editorHoverWidget-foreground);
+    border: 1px solid var(--vscode-editorHoverWidget-border);
+    transition: opacity 120ms ease-in-out;
+}
+
+.code-input-wrapper:hover .query-hint {
+    opacity: 0.85;
+}
+
+.query-hint.visible {
+    opacity: 0.85;
+}

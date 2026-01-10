@@ -304,16 +304,16 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
                     const CHUNK_SIZE = ${vscode.workspace.getConfiguration('flat-file-explorer').get("chunkSize")}
                 </script>
 
+                <!-- Note: Tabulator must come BEFORE Monaco! -->
+                <script nonce="${nonce}" src="${luxonJsUri}"></script>
+                <script nonce="${nonce}" src="${tabulatorJsUri}"></script>
+                <link rel="stylesheet" href="${tabulatorCssUri}">
+
                 <script nonce="${nonce}">
                     const MONACO_BASE_URL = "${monacoUri}";
                 </script>
 
                 <script nonce="${nonce}" src="${monacoUri}/vs/loader.js"></script>
-
-                <script nonce="${nonce}" src="${luxonJsUri}"></script>
-
-                <script nonce="${nonce}" src="${tabulatorJsUri}"></script>
-                <link rel="stylesheet" href="${tabulatorCssUri}">
 
                 <script nonce="${nonce}" src="${prismJsUri}"></script>
                 <link rel="stylesheet" href="${prismCssUri}">

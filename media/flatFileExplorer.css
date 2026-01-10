@@ -15,6 +15,46 @@ body {
     margin-right: 12.5%;
 }
 
+.query-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.query-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.action-button {
+    font-size: 12px;
+    padding: 4px 10px;
+    cursor: pointer;
+
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+
+    opacity: 0.9;
+}
+
+.action-button:hover {
+    opacity: 1;
+    background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.action-button.primary {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-button-border);
+}
+
+.action-button.primary:hover {
+    background: var(--vscode-button-hoverBackground);
+}
+
 #resultsContainer {
     flex-grow: 1;
     margin-left: -20px;

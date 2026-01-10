@@ -31,6 +31,7 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
 
     private readonly _uri: vscode.Uri;
     private readonly _db: duckdb.Database;
+    private readonly _createViewSql: string;
 
     private constructor(uri: vscode.Uri) {
         super();
@@ -43,23 +44,28 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
             tableName = parse(uri.fsPath).name;
 
         const fileExtension = extname(uri.fsPath).toLowerCase();
-        let query = "";
 
         if (CSV_EXTENSIONS.includes(fileExtension)) {
-            query = `CREATE VIEW ${tableName} AS SELECT * FROM read_csv('${uri.fsPath}');`;
+            this._createViewSql = `CREATE VIEW ${tableName} AS SELECT * FROM read_csv('${uri.fsPath}');`;
         } else if (PARQUET_EXTENSIONS.includes(fileExtension)) {
-            query = `CREATE VIEW ${tableName} AS SELECT * FROM read_parquet('${uri.fsPath}');`;
+            this._createViewSql = `CREATE VIEW ${tableName} AS SELECT * FROM read_parquet('${uri.fsPath}');`;
         } else {
             // If this error occurs, check that the trigger types in `package.json` are in sync
             // with the extension definition arrays at the top of this file.
             throw new Error("Unsupported file type. Should not have opened with Flat File Explorer.");
         }
 
-        this.db.exec(query);
+        this.db.exec(this._createViewSql);
     }
 
     public get uri() { return this._uri; }
     public get db() { return this._db; }
+
+    /** The SQL statement used to create the view for this document.
+     * 
+     * Single line, ending with a semicolon.
+    */
+    public get createViewSql() { return this._createViewSql; }
 
     private readonly _onDidDispose = this._register(new vscode.EventEmitter<void>());
     /**
@@ -77,6 +83,13 @@ class ParquetDocument extends Disposable implements vscode.CustomDocument {
         super.dispose();
     }
 
+    /**
+     * 
+     * @param sql Select statement on `data` table.
+     * @param limit Pagination.
+     * @param offset Pagination.
+     * @returns A `SELECT * FROM (SELECT * FROM data)` query with LIMIT and OFFSET applied.
+     */
     private formatSql(sql: string, limit: number, offset: number): string {
         return `SELECT * FROM (\n${sql.replace(';', '')}\n) LIMIT ${limit} OFFSET ${offset}`;
     }
@@ -163,7 +176,7 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
         webviewPanel: vscode.WebviewPanel,
         _token: vscode.CancellationToken
     ): Promise<void> {
-        // Setup initial content for the webview
+        // Setup initial content for the webview.
         webviewPanel.webview.options = {
             enableScripts: true,
         };
@@ -172,7 +185,7 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
 
         webviewPanel.webview.onDidReceiveMessage(e => this.onMessage(document, webviewPanel, e));
 
-        // Send the autoQuery configuration to the webview
+        // Send the autoQuery configuration to the webview.
         const config = vscode.workspace.getConfiguration('flat-file-explorer')
         this.postMessage(webviewPanel, {
             type: 'config',
@@ -272,9 +285,24 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
             </head>
             <body>
                 <div id="controls">
-                    <code-input nonce="${nonce}" lang="SQL" value="${defaultQuery}"></code-input>
+                    <div class="query-toolbar">
+                        <code-input
+                            nonce="${nonce}"
+                            lang="SQL"
+                            value="${defaultQuery}">
+                        </code-input>
+
+                        <div class="query-actions">
+                            <button id="executeQueryButton" class="action-button primary">
+                                Execute
+                            </button>
+                            <button id="copyFullQueryButton" class="action-button">
+                                Copy Full Query
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                </div>
+
                 <div id="resultsContainer">
                     <div id="results"></div>
                     <div id="feedback">
@@ -294,6 +322,7 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
         panel.webview.postMessage(message);
     }
 
+    /** Handle incoming message. */
     private onMessage(document: ParquetDocument, panel: vscode.WebviewPanel, message: any) {
         switch (message.type) {
             case 'query':
@@ -302,7 +331,18 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
             case 'more':
                 document.fetchMore(message.sql, message.limit, message.offset, (msg: IMessage) => this.postMessage(panel, msg));
                 return;
+            case 'copy':
+                let fullQuery = `${document.createViewSql}\n\n${message.sql.trim()}`;
 
+                // Terminate with semicolon if not yet.
+                if (!fullQuery.endsWith(";")) {
+                    fullQuery += ";";
+                }
+                fullQuery += '\n';
+
+                vscode.env.clipboard.writeText(fullQuery);
+                vscode.window.showInformationMessage("Full query copied to clipboard");
+                return;
         }
     }
 }

@@ -154,3 +154,18 @@ code-input pre {
 .query-hint.visible {
     opacity: 0.85;
 }
+
+.copy-query-button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 12px;
+    padding: 4px 8px;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.copy-query-button:hover {
+    opacity: 1;
+}
+

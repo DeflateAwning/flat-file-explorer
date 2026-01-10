@@ -101,7 +101,6 @@ interface DescribeColumn {
 
 interface QueryMessage {
     type: "query";
-    autoQuery?: boolean;
     results?: unknown[];
     describe?: DescribeColumn[];
     message?: string;
@@ -135,6 +134,8 @@ interface CodeInputElement extends HTMLElement {
     let loadingIconElement: Nullable<HTMLElement> = null;
     let errorMessageElement: Nullable<HTMLElement> = null;
     let tableElement: Nullable<HTMLElement> = null;
+    let copyFullQueryElement: Nullable<HTMLElement> = null;
+
     let table: any = null;
     let lastSql: string | undefined;
 
@@ -257,6 +258,10 @@ interface CodeInputElement extends HTMLElement {
         codeInput.templates.prism(Prism, [new codeInput.plugins.Indent()])
     );
 
+    const readSqlQueryFromBox = () => {
+        return (textAreaElement!.parentElement as CodeInputElement).value;
+    };
+
     // ---------- Event Handlers ----------
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -282,7 +287,7 @@ interface CodeInputElement extends HTMLElement {
     };
 
     const runQuery = () => {
-        const sql = (textAreaElement!.parentElement as CodeInputElement).value;
+        const sql = readSqlQueryFromBox();
 
         // Ctrl/Cmd + Enter causes onChange to be called twice.
         if (sql === lastSql) return;
@@ -338,23 +343,36 @@ interface CodeInputElement extends HTMLElement {
         return isMac ? "⌘⏎ to query" : "Ctrl+Enter to query";
     };
 
+    function onCopyButtonClicked() {
+        const sql = readSqlQueryFromBox();
+
+        vscode.postMessage({
+            type: "copy",
+            sql
+        });
+    }
+
     // ---------- Init ----------
 
-    waitForElements(["textarea", "#results", "#loadingIcon", "#errorMessage"] as const).then(
-        ([textarea, results, loadingIcon, errorMessage]) => {
+    waitForElements(["textarea", "#results", "#loadingIcon", "#errorMessage", "#copyFullQuery"] as const).then(
+        ([textarea, results, loadingIcon, errorMessage, copyFullQuery]) => {
             textAreaElement = textarea as HTMLTextAreaElement;
             tableElement = results as HTMLElement;
             loadingIconElement = loadingIcon as HTMLElement;
             errorMessageElement = errorMessage as HTMLElement;
+            copyFullQueryElement = copyFullQuery as HTMLElement;
 
             textAreaElement.addEventListener("input", onInput);
             textAreaElement.addEventListener("change", onChange);
             textAreaElement.addEventListener("keydown", onKeyDown, true);
 
+            copyFullQueryElement.addEventListener("click", onCopyButtonClicked);
+
             const state = vscode.getState();
             if (state?.sql) {
                 (textarea.parentElement as CodeInputElement).value = state.sql;
             }
+
 
             textarea.dispatchEvent(new Event("input"));
             textarea.dispatchEvent(new Event("change"));

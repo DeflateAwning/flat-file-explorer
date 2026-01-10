@@ -285,10 +285,24 @@ export class ParquetDocumentProvider implements vscode.CustomReadonlyEditorProvi
             </head>
             <body>
                 <div id="controls">
-                    <code-input nonce="${nonce}" lang="SQL" value="${defaultQuery}"></code-input>
-                    <button id="copyFullQuery">Copy Full Query</button>
+                    <div class="query-toolbar">
+                        <code-input
+                            nonce="${nonce}"
+                            lang="SQL"
+                            value="${defaultQuery}">
+                        </code-input>
+
+                        <div class="query-actions">
+                            <button id="executeQueryButton" class="action-button primary">
+                                Execute
+                            </button>
+                            <button id="copyFullQueryButton" class="action-button">
+                                Copy Full Query
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                </div>
+
                 <div id="resultsContainer">
                     <div id="results"></div>
                     <div id="feedback">

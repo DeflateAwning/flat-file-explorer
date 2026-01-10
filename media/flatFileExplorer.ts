@@ -116,7 +116,11 @@ interface ConfigMessage {
     autoQuery?: boolean;
 }
 
-type IncomingMessage = QueryMessage | MoreMessage | ConfigMessage;
+interface ReloadBaseViewMessage {
+    type: "reloadBaseView";
+}
+
+type IncomingMessage = QueryMessage | MoreMessage | ConfigMessage | ReloadBaseViewMessage;
 
 interface CodeInputElement extends HTMLElement {
     value: string;
@@ -139,6 +143,7 @@ interface CodeInputElement extends HTMLElement {
 
     let table: any = null;
     let lastSql: string | undefined;
+    let lastQueryTimestampMs: Nullable<number> = null;
 
     // Whether the spinner is currently showing.
     let loadingQuery = false;
@@ -250,6 +255,10 @@ interface CodeInputElement extends HTMLElement {
                     table.addData(message.results);
                 }
                 break;
+
+            case "reloadBaseView":
+                runQuery();
+                break;
         }
     });
 
@@ -289,11 +298,15 @@ interface CodeInputElement extends HTMLElement {
     const runQuery = () => {
         const sql = readSqlQueryFromBox();
 
-        updateQueryHint();
-
         // Ctrl/Cmd + Enter causes onChange to be called twice.
-        if (sql === lastSql) return;
+        // if (sql === lastSql) return; - Don't do this because we must re-query on file changes!
+        // This also has a debouncing effect, in case a CSV writer writes incrementally.
+        if (lastQueryTimestampMs && ((Date.now() - lastQueryTimestampMs) < 250)) return;
+
+        lastQueryTimestampMs = Date.now();
         lastSql = sql;
+
+        updateQueryHint();
 
         loadingQuery = true;
         loadingMore = false;

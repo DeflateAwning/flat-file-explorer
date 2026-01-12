@@ -32,8 +32,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Install dependencies for publishing.
       - name: Install vsce
         run: npm install --global @vscode/vsce
+      - name: Install ovsx
+        run: npm install --global ovsx
 
       - name: Build & package extension
         run: ./package.sh
@@ -44,7 +47,15 @@ jobs:
         with:
           name: vsix
           path: dist/*.vsix
-      
+
+      # Publish to Open VSX.
+      - name: Publish to Open VSX
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          OPEN_VSX_PUBLISH_TOKEN: ${{ secrets.OPEN_VSX_PUBLISH_TOKEN }}
+        run: |
+          ovsx publish dist/*.vsix --pat "$OPEN_VSX_PUBLISH_TOKEN"
+
       # Publish to VS Code Marketplace.
       - name: Publish to VS Code Marketplace
         if: startsWith(github.ref, 'refs/tags/v')

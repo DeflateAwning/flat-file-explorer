@@ -14,6 +14,14 @@
 
 ## Publishing a Release
 
+```bash
+git tag v2.x.x
+git push origin v2.x.x
+# GitHub Action takes care of the rest, including updating the version number, publishing, and GitHub Release.
+```
+
+## Publishing a Release (Manually)
+
 1. Update the version number in `package.json`.
 2. Package all release versions: `./package.sh`
 3. Publish the release to the VSCode Marketplace: `vsce publish --packagePath dist/*.vsix`

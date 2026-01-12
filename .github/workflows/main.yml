@@ -41,6 +41,11 @@ jobs:
       - name: Build & package extension
         run: ./package.sh
 
+      - name: List build products
+        run: |
+          du -a out/
+          du -a dist/
+
       - name: Upload build artifacts
         if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
@@ -54,7 +59,7 @@ jobs:
         env:
           OPEN_VSX_PUBLISH_TOKEN: ${{ secrets.OPEN_VSX_PUBLISH_TOKEN }}
         run: |
-          ovsx publish dist/*.vsix --pat "$OPEN_VSX_PUBLISH_TOKEN"
+          ovsx publish --packagePath dist/*.vsix --pat "$OPEN_VSX_PUBLISH_TOKEN"
 
       # Publish to VS Code Marketplace.
       - name: Publish to VS Code Marketplace
@@ -62,7 +67,7 @@ jobs:
         env:
           VSCE_PUBLISH_PERSONAL_ACCESS_TOKEN: ${{ secrets.VSCE_PUBLISH_PERSONAL_ACCESS_TOKEN }}
         run: |
-          vsce publish --pat "$VSCE_PUBLISH_PERSONAL_ACCESS_TOKEN"
+          vsce publish --packagePath dist/*.vsix --pat "$VSCE_PUBLISH_PERSONAL_ACCESS_TOKEN"
 
       # Create GitHub Release.
       - name: Create GitHub Release
